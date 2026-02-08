@@ -13,6 +13,7 @@
             --danger: #e74c3c;
             --wood: #8d6e63;
             --wood-dark: #5d4037;
+            --hint: #f1c40f;
         }
 
         body {
@@ -112,18 +113,15 @@
             box-shadow: 3px 3px 0 var(--wood-dark);
         }
         
-        .measure-line {
-            border-bottom: 2px dashed #333;
-            width: 100%;
-            position: relative;
-            top: -10px;
-            text-align: center;
-        }
-
         /* --- INPUT --- */
         .input-area {
             margin-top: 30px;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         input[type="text"] {
@@ -131,7 +129,7 @@
             padding: 10px;
             border-radius: 10px;
             border: 2px solid #ccc;
-            width: 70%;
+            width: 60%;
             text-align: center;
             font-family: monospace;
         }
@@ -144,8 +142,36 @@
             border-radius: 10px;
             font-size: 1.2rem;
             cursor: pointer;
-            margin-top: 10px;
             width: 100%;
+            margin-top: 10px;
+        }
+
+        button.hint-btn {
+            background-color: #fff3e0;
+            color: #f57c00;
+            border: 2px solid #ffe0b2;
+            padding: 10px;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button.hint-btn:hover { background-color: #ffe0b2; }
+
+        .hint-box {
+            background-color: #fff9c4;
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+            font-size: 1rem;
+            color: #555;
+            border: 1px solid #fbc02d;
         }
 
         .feedback {
@@ -157,7 +183,7 @@
         }
         .correct { color: var(--success); }
         .wrong { color: var(--danger); }
-        .hint { color: #f39c12; font-size: 1rem; display: block; margin-top: 5px;}
+        .tip { color: #f39c12; font-size: 1rem; display: block; margin-top: 5px;}
 
     </style>
 </head>
@@ -195,8 +221,11 @@
 
         <div class="input-area">
             <input type="text" id="kiosk-input" placeholder="Svar..." autocomplete="off">
-            <button class="action-btn" onclick="checkKiosk()">Svara</button>
+            <button class="hint-btn" onclick="showHint('kiosk')" title="Få en ledtråd">💡</button>
         </div>
+        <div id="kiosk-hint" class="hint-box"></div>
+        <button class="action-btn" onclick="checkKiosk()">Svara</button>
+        
         <div id="kiosk-feedback" class="feedback"></div>
     </div>
 
@@ -215,8 +244,11 @@
 
         <div class="input-area">
             <input type="text" id="wood-input" placeholder="Svar..." autocomplete="off">
-            <button class="action-btn" style="background-color: var(--wood);" onclick="checkWood()">Såga!</button>
+            <button class="hint-btn" onclick="showHint('wood')" title="Få en ledtråd">💡</button>
         </div>
+        <div id="wood-hint" class="hint-box"></div>
+        <button class="action-btn" style="background-color: var(--wood);" onclick="checkWood()">Såga!</button>
+        
         <div id="wood-feedback" class="feedback"></div>
     </div>
 
@@ -251,9 +283,24 @@
         if (mode === 'wood') initWood();
     }
 
+    // --- SHARED ---
+    function resetUI(prefix) {
+        document.getElementById(`${prefix}-input`).value = "";
+        document.getElementById(`${prefix}-feedback`).innerHTML = "";
+        document.getElementById(`${prefix}-hint`).style.display = "none";
+        document.getElementById(`${prefix}-input`).focus();
+    }
+
+    function showHint(prefix) {
+        const box = document.getElementById(`${prefix}-hint`);
+        if (box.style.display === "block") return; // Redan visad
+        
+        box.innerHTML = currentQ.hint;
+        box.style.display = "block";
+    }
+
     // --- KIOSK LOGIC ---
     function initKiosk() {
-        // Show prices
         const container = document.getElementById('kiosk-prices');
         container.innerHTML = fruits.map(f => 
             `<div class="price-tag">${f.icon} ${f.price} kr</div>`
@@ -262,31 +309,28 @@
     }
 
     function nextKioskQ() {
-        document.getElementById('kiosk-input').value = "";
-        document.getElementById('kiosk-feedback').innerHTML = "";
-        document.getElementById('kiosk-input').focus();
-
+        resetUI('kiosk');
         const type = Math.floor(Math.random() * 3);
         const f1 = fruits[Math.floor(Math.random() * fruits.length)];
         
         if (type === 0) { // Pris
             currentQ = {
                 text: `Vad får du betala för <b>${f1.var}</b> st ${f1.name}er?`,
-                answers: [`${f1.price}${f1.var}`, `${f1.price}*${f1.var}`]
+                answers: [`${f1.price}${f1.var}`],
+                hint: `Ta priset (${f1.price}) gånger antalet (${f1.var}). Skriv dem ihop!`
             };
         } else if (type === 1) { // Växel 100
             currentQ = {
                 text: `Du betalar med 100 kr för <b>${f1.var}</b> st ${f1.name}er. Vad får du tillbaka?`,
-                answers: [`100-${f1.price}${f1.var}`, `100-${f1.price}*${f1.var}`]
+                answers: [`100-${f1.price}${f1.var}`],
+                hint: `Du börjar med 100 kr. Dra sedan bort (-) kostnaden för frukten (${f1.price}${f1.var}).`
             };
         } else { // Två varor
             const f2 = fruits.find(f => f !== f1);
             currentQ = {
                 text: `Vad kostar <b>${f1.var}</b> st ${f1.name}er och <b>${f2.var}</b> st ${f2.name}er?`,
-                answers: [
-                    `${f1.price}${f1.var}+${f2.price}${f2.var}`,
-                    `${f2.price}${f2.var}+${f1.price}${f1.var}`
-                ]
+                answers: [`${f1.price}${f1.var}+${f2.price}${f2.var}`, `${f2.price}${f2.var}+${f1.price}${f1.var}`],
+                hint: `Räkna ut priset för ${f1.name}erna först, sen ${f2.name}erna. Plussa ihop dem (+).`
             };
         }
         document.getElementById('kiosk-question').innerHTML = currentQ.text;
@@ -302,32 +346,33 @@
     }
 
     function nextWoodQ() {
-        document.getElementById('wood-input').value = "";
-        document.getElementById('wood-feedback').innerHTML = "";
-        document.getElementById('wood-input').focus();
-
+        resetUI('wood');
         const type = Math.floor(Math.random() * 4);
-        const val = Math.floor(Math.random() * 10) + 2; // 2-12
+        const val = Math.floor(Math.random() * 10) + 2; 
         
         if (type === 0) { // Kortare
             currentQ = {
-                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>${val} cm kortare</b>.`,
-                answers: [`x-${val}`]
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>${val} cm kortare</b>.`,
+                answers: [`x-${val}`],
+                hint: `Kortare betyder att vi tar bort en bit. Använd minus (-).`
             };
         } else if (type === 1) { // Längre
             currentQ = {
-                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>${val} cm längre</b>.`,
-                answers: [`x+${val}`, `${val}+x`]
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>${val} cm längre</b>.`,
+                answers: [`x+${val}`, `${val}+x`],
+                hint: `Längre betyder att vi lägger till en bit. Använd plus (+).`
             };
         } else if (type === 2) { // Dubbelt
             currentQ = {
-                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>dubbelt</b> så lång.`,
-                answers: [`2x`, `2*x`, `x*2`]
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>dubbelt</b> så lång.`,
+                answers: [`2x`],
+                hint: `Dubbelt betyder gånger 2. Skriv 2 framför x.`
             };
         } else { // Hälften
             currentQ = {
-                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>hälften</b> så lång.`,
-                answers: [`x/2`, `0.5x`, `0.5*x`, `x*0.5`]
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>hälften</b> så lång.`,
+                answers: [`x/2`, `0.5x`],
+                hint: `Hälften betyder dela med 2 (x/2).`
             };
         }
         document.getElementById('wood-question').innerHTML = currentQ.text;
@@ -340,39 +385,25 @@
     // --- SMART VALIDATION ---
     function smartNormalize(str) {
         let s = str.toLowerCase();
-        s = s.replace(/\s/g, ''); // Ta bort mellanslag
-        s = s.replace(',', '.');   // Komma till punkt
-        s = s.replace(/\*/g, '');  // Ta bort gånger (3*x -> 3x)
-        
-        // Smart fix: "y4" -> "4y" (Bokstav följt av Siffra -> Byt plats)
-        // Regex fångar: (en bokstav a-z)(ett eller flera nummer)
-        s = s.replace(/([a-zåäö])([0-9]+)/g, '$2$1');
-        
+        s = s.replace(/\s/g, '').replace(',', '.').replace(/\*/g, '');
+        s = s.replace(/([a-zåäö])([0-9]+)/g, '$2$1'); // Fixa y4 -> 4y
         return s;
     }
 
     function validateAnswer(input, answers, feedbackId, nextFn) {
         const cleanInput = smartNormalize(input);
         const cleanAnswers = answers.map(a => smartNormalize(a));
-
         const el = document.getElementById(feedbackId);
         
-        // Kolla om input finns i facit
         if (cleanAnswers.includes(cleanInput)) {
             el.innerHTML = "<span class='correct'>✅ Rätt!</span>";
-            
-            // Pedagogisk feedback om man skrev y4 men vi godkände det
-            if (input.match(/[a-z][0-9]/i)) {
-               el.innerHTML += "<span class='hint'>Tips: I matten skriver man oftast siffran först (4y istället för y4).</span>";
-            }
-
-            setTimeout(nextFn, 2000); // Lite längre tid för att hinna läsa tipset
+            if (input.match(/[a-z][0-9]/i)) el.innerHTML += "<span class='tip'>Tips: Siffran först (4y)!</span>";
+            setTimeout(nextFn, 2000);
         } else {
-            el.innerHTML = "<span class='wrong'>❌ Inte riktigt. Försök igen!</span>";
+            el.innerHTML = "<span class='wrong'>❌ Inte riktigt. Försök igen eller tryck på 💡!</span>";
         }
     }
 
-    // Enter Key Support
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             if (currentMode === 'kiosk') checkKiosk();
@@ -381,7 +412,5 @@
     });
 
 </script>
-
-<!-- MathHelper v2.2: Smarter Validation -->
 </body>
 </html>
