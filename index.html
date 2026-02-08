@@ -3,30 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MathHelper</title>
+    <title>Algebra-Tränaren</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
         body {
-            font-family: sans-serif;
+            font-family: 'Comic Neue', sans-serif; /* Skol-känsla */
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 3px solid #87ceeb;
+        }
+
+        h1 { color: #2c3e50; margin-top: 0; }
+
+        .price-list {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
+            gap: 15px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
-        .container {
-            background: white;
-            padding: 2rem;
+
+        .price-item {
+            background: #fff8dc;
+            border: 2px solid #deb887;
+            border-radius: 10px;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .question-box {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            background: #e6f7ff;
+            padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
         }
+
+        input {
+            font-size: 1.5rem;
+            padding: 10px;
+            width: 80%;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            font-family: monospace;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.95); }
+        button.secondary { background-color: #2196F3; display: none; }
+
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            min-height: 1.5em;
+        }
+
+        .correct { color: #2e7d32; }
+        .wrong { color: #c62828; }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>MathHelper</h1>
-        <p>Väntar på instruktioner...</p>
+
+    <div class="card">
+        <h1>🍌 Algebra-Tränaren 🍎</h1>
+        
+        <div class="price-list" id="priceList">
+            <!-- Fylls med JS -->
+        </div>
+
+        <div class="question-box" id="questionText">
+            Laddar fråga...
+        </div>
+
+        <input type="text" id="answerInput" placeholder="T.ex. 3x" autocomplete="off">
+        <br>
+        <button id="checkBtn" onclick="checkAnswer()">Rätta</button>
+        <button id="nextBtn" class="secondary" onclick="nextQuestion()">Nästa Fråga ➡️</button>
+
+        <div id="feedback"></div>
     </div>
+
+    <script>
+        // Data
+        const fruits = [
+            { name: "banan", emoji: "🍌", price: 3, var: "x" },
+            { name: "äpple", emoji: "🍎", price: 4, var: "y" },
+            { name: "apelsin", emoji: "🍊", price: 5, var: "z" },
+            { name: "päron", emoji: "🍐", price: 6, var: "a" }
+        ];
+
+        let currentQuestion = {};
+
+        // Init
+        function init() {
+            const list = document.getElementById('priceList');
+            list.innerHTML = "";
+            fruits.forEach(f => {
+                list.innerHTML += `<div class="price-item">${f.emoji} ${f.price} kr</div>`;
+            });
+            nextQuestion();
+        }
+
+        // Generate Question
+        function nextQuestion() {
+            // Reset UI
+            document.getElementById('answerInput').value = "";
+            document.getElementById('feedback').innerHTML = "";
+            document.getElementById('answerInput').disabled = false;
+            document.getElementById('checkBtn').style.display = "inline-block";
+            document.getElementById('nextBtn').style.display = "none";
+            document.getElementById('answerInput').focus();
+
+            // Randomize type
+            const type = Math.floor(Math.random() * 3); // 0, 1, 2
+            const fruit = fruits[Math.floor(Math.random() * fruits.length)];
+            
+            if (type === 0) {
+                // Scenario A: "Vad kostar x bananer?"
+                currentQuestion = {
+                    text: `Teckna ett uttryck för vad du får betala för <b>${fruit.var}</b> st ${fruit.name}er.`,
+                    answers: [`${fruit.price}${fruit.var}`, `${fruit.price}*${fruit.var}`, `${fruit.price} * ${fruit.var}`, `${fruit.price} ${fruit.var}`]
+                };
+            } else if (type === 1) {
+                // Scenario B: "Växel på 100 kr"
+                currentQuestion = {
+                    text: `Teckna ett uttryck för vad du får tillbaka på <b>100 kr</b> om du köper <b>${fruit.var}</b> st ${fruit.name}er.`,
+                    answers: [`100-${fruit.price}${fruit.var}`, `100 - ${fruit.price}${fruit.var}`, `100-${fruit.price}*${fruit.var}`]
+                };
+            } else {
+                // Scenario C: Två frukter
+                const fruit2 = fruits.find(f => f !== fruit);
+                currentQuestion = {
+                    text: `Teckna ett uttryck för priset av <b>${fruit.var}</b> st ${fruit.name}er och <b>${fruit2.var}</b> st ${fruit2.name}er.`,
+                    answers: [
+                        `${fruit.price}${fruit.var}+${fruit2.price}${fruit2.var}`, 
+                        `${fruit.price}${fruit.var} + ${fruit2.price}${fruit2.var}`,
+                        `${fruit2.price}${fruit2.var}+${fruit.price}${fruit.var}`, // Omvänd ordning
+                        `${fruit2.price}${fruit2.var} + ${fruit.price}${fruit.var}`
+                    ]
+                };
+            }
+
+            document.getElementById('questionText').innerHTML = currentQuestion.text;
+        }
+
+        // Check Answer
+        function checkAnswer() {
+            let input = document.getElementById('answerInput').value.trim();
+            // Normalisera input: ta bort onödiga mellanslag om användaren skriver "3 x" -> "3x"
+            // För enkelhets skull matchar vi mot en lista av godkända svar för nu.
+            
+            // Små bokstäver
+            input = input.toLowerCase();
+
+            // Enkel normalisering: Ta bort alla mellanslag för jämförelse
+            const cleanInput = input.replace(/\s/g, '');
+            
+            let isCorrect = false;
+            // Jämför renat svar mot renade facit-svar
+            for (let ans of currentQuestion.answers) {
+                if (cleanInput === ans.replace(/\s/g, '')) {
+                    isCorrect = true;
+                    break;
+                }
+            }
+
+            const feedback = document.getElementById('feedback');
+            if (isCorrect) {
+                feedback.innerHTML = "<span class='correct'>✅ Rätt svar! Bra jobbat!</span>";
+                document.getElementById('checkBtn').style.display = "none";
+                document.getElementById('nextBtn').style.display = "inline-block";
+                document.getElementById('answerInput').disabled = true;
+                document.getElementById('nextBtn').focus();
+            } else {
+                feedback.innerHTML = "<span class='wrong'>❌ Inte riktigt. Försök igen!</span>";
+            }
+        }
+
+        // Allow Enter key
+        document.getElementById('answerInput').addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                if (document.getElementById('nextBtn').style.display === 'none') {
+                    checkAnswer();
+                } else {
+                    nextQuestion();
+                }
+            }
+        });
+
+        init();
+    </script>
+
 </body>
 </html>
