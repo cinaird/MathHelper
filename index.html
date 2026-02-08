@@ -318,20 +318,20 @@
             currentQ = {
                 text: `Vad får du betala för <b>${f1.var}</b> st ${f1.plural}?`,
                 answers: [`${f1.price}${f1.var}`],
-                hint: `1. En ${f1.name} kostar <b>${f1.price} kr</b>.<br>2. Du köper <b>${f1.var}</b> stycken.<br>3. Skriv ihop priset och antalet: <b>${f1.price}${f1.var}</b>`
+                hint: `1. En ${f1.name} kostar <b>${f1.price} kr</b>.<br>2. Du köper <b>${f1.var}</b> stycken.<br>3. Skriv ihop pris och antal, t.ex. <b>5z</b>.`
             };
         } else if (type === 1) { // Växel 100
             currentQ = {
                 text: `Du betalar med 100 kr för <b>${f1.var}</b> st ${f1.plural}. Vad får du tillbaka?`,
                 answers: [`100-${f1.price}${f1.var}`],
-                hint: `1. Kostnaden för ${f1.plural} är <b>${f1.price}${f1.var}</b> (Pris &times; Antal).<br>2. Du har 100 kr.<br>3. Dra bort kostnaden från hundralappen: <b>100 - ${f1.price}${f1.var}</b>`
+                hint: `1. Kostnaden för ${f1.plural} är <b>${f1.price}${f1.var}</b> (Pris &times; Antal).<br>2. Du har 100 kr.<br>3. Dra bort (-) kostnaden från hundralappen.`
             };
         } else { // Två varor
             const f2 = fruits.find(f => f !== f1);
             currentQ = {
                 text: `Vad kostar <b>${f1.var}</b> st ${f1.plural} och <b>${f2.var}</b> st ${f2.plural}?`,
                 answers: [`${f1.price}${f1.var}+${f2.price}${f2.var}`, `${f2.price}${f2.var}+${f1.price}${f1.var}`],
-                hint: `1. Priset för ${f1.plural} är <b>${f1.price}${f1.var}</b>.<br>2. Priset för ${f2.plural} är <b>${f2.price}${f2.var}</b>.<br>3. Lägg ihop dem med plus (+): <b>${f1.price}${f1.var} + ${f2.price}${f2.var}</b>`
+                hint: `1. Priset för ${f1.plural} är <b>${f1.price}${f1.var}</b>.<br>2. Priset för ${f2.plural} är <b>${f2.price}${f2.var}</b>.<br>3. Lägg ihop dem med plus (+).`
             };
         }
         document.getElementById('kiosk-question').innerHTML = currentQ.text;
@@ -355,25 +355,25 @@
             currentQ = {
                 text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>${val} cm kortare</b>.`,
                 answers: [`x-${val}`],
-                hint: `1. Vi börjar med längden <b>x</b>.<br>2. "Kortare" betyder att vi tar bort. Använd minus (-).<br>3. Svaret blir: <b>x - ${val}</b>`
+                hint: `1. Vi börjar med längden <b>x</b>.<br>2. "Kortare" betyder att vi tar bort.<br>3. Använd minus (-) och värdet <b>${val}</b>.`
             };
         } else if (type === 1) { // Längre
             currentQ = {
                 text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>${val} cm längre</b>.`,
                 answers: [`x+${val}`, `${val}+x`],
-                hint: `1. Vi börjar med längden <b>x</b>.<br>2. "Längre" betyder att vi lägger till. Använd plus (+).<br>3. Svaret blir: <b>x + ${val}</b>`
+                hint: `1. Vi börjar med längden <b>x</b>.<br>2. "Längre" betyder att vi lägger till.<br>3. Använd plus (+) och värdet <b>${val}</b>.`
             };
         } else if (type === 2) { // Dubbelt
             currentQ = {
                 text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>dubbelt</b> så lång.`,
                 answers: [`2x`],
-                hint: `1. Dubbelt betyder "gånger 2".<br>2. I algebra skriver man siffran framför bokstaven.<br>3. Svaret blir: <b>2x</b>`
+                hint: `1. Dubbelt betyder "gånger 2".<br>2. I algebra skriver man siffran framför bokstaven.<br>3. Använd <b>2</b> och <b>x</b>.`
             };
         } else { // Hälften
             currentQ = {
                 text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>hälften</b> så lång.`,
                 answers: [`x/2`, `0.5x`],
-                hint: `1. Hälften betyder att vi delar med 2.<br>2. Använd bråkstreck (/) eller decimal (0.5).<br>3. Svaret blir: <b>x/2</b>`
+                hint: `1. Hälften betyder att vi delar med 2.<br>2. Använd bråkstreck (/).`
             };
         }
         document.getElementById('wood-question').innerHTML = currentQ.text;
