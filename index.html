@@ -3,228 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algebra-Tränaren</title>
+    <title>MathHelper: Algebra-Spelen</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap');
+
+        :root {
+            --primary: #4a90e2;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --wood: #8d6e63;
+            --wood-dark: #5d4037;
+        }
 
         body {
-            font-family: 'Comic Neue', sans-serif; /* Skol-känsla */
-            background-color: #f0f8ff;
-            color: #333;
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
+            color: #333;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
             padding: 20px;
         }
 
-        .card {
+        /* --- MENY --- */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .menu-card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            padding: 2rem;
-            max-width: 500px;
-            width: 100%;
+            border-radius: 20px;
+            padding: 30px;
             text-align: center;
-            border: 3px solid #87ceeb;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 4px solid transparent;
         }
 
-        h1 { color: #2c3e50; margin-top: 0; }
-
-        .price-list {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
 
-        .price-item {
-            background: #fff8dc;
-            border: 2px solid #deb887;
+        .menu-card.kiosk { border-color: var(--success); }
+        .menu-card.wood { border-color: var(--wood); }
+
+        .icon { font-size: 4rem; display: block; margin-bottom: 10px; }
+        .title { font-size: 1.5rem; font-weight: 600; }
+
+        /* --- GAME SCREENS --- */
+        .game-screen {
+            display: none; /* Hidden by default */
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .active { display: block; }
+
+        .back-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #eee;
+            border: none;
+            padding: 8px 12px;
             border-radius: 10px;
-            padding: 10px;
+            cursor: pointer;
             font-weight: bold;
-            font-size: 1.2rem;
         }
 
-        .question-box {
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-            background: #e6f7ff;
-            padding: 15px;
+        /* --- KIOSKEN (Styles) --- */
+        .price-tag {
+            background: #fff9c4;
+            border: 2px solid #fbc02d;
+            padding: 5px 10px;
             border-radius: 8px;
+            display: inline-block;
+            margin: 5px;
+            font-weight: bold;
         }
 
-        input {
+        /* --- SNICKARBOA (Styles) --- */
+        .wood-plank {
+            background-color: var(--wood);
+            height: 60px;
+            width: 80%;
+            margin: 20px auto;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            position: relative;
+            box-shadow: 3px 3px 0 var(--wood-dark);
+        }
+        
+        .measure-line {
+            border-bottom: 2px dashed #333;
+            width: 100%;
+            position: relative;
+            top: -10px;
+            text-align: center;
+        }
+
+        /* --- INPUT --- */
+        .input-area {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        input[type="text"] {
             font-size: 1.5rem;
             padding: 10px;
-            width: 80%;
+            border-radius: 10px;
             border: 2px solid #ccc;
-            border-radius: 8px;
+            width: 70%;
             text-align: center;
             font-family: monospace;
         }
 
-        button {
-            background-color: #4CAF50;
+        button.action-btn {
+            background-color: var(--primary);
             color: white;
-            padding: 12px 24px;
-            font-size: 1.2rem;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: transform 0.1s;
-        }
-
-        button:active { transform: scale(0.95); }
-        button.secondary { background-color: #2196F3; display: none; }
-
-        #feedback {
-            margin-top: 20px;
-            font-weight: bold;
+            padding: 12px 24px;
+            border-radius: 10px;
             font-size: 1.2rem;
-            min-height: 1.5em;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
         }
 
-        .correct { color: #2e7d32; }
-        .wrong { color: #c62828; }
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 1.5em;
+            text-align: center;
+        }
+        .correct { color: var(--success); }
+        .wrong { color: var(--danger); }
 
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>🍌 Algebra-Tränaren 🍎</h1>
-        
-        <div class="price-list" id="priceList">
-            <!-- Fylls med JS -->
+<div class="app-container">
+    
+    <!-- MAIN MENU -->
+    <div id="menu" class="active">
+        <h1 style="text-align: center; margin-bottom: 40px;">Välj Station 🛠️</h1>
+        <div class="menu-grid">
+            <div class="menu-card kiosk" onclick="startGame('kiosk')">
+                <span class="icon">🏪</span>
+                <span class="title">Kiosken</span>
+                <p>Pris, Antal & Växel</p>
+            </div>
+            <div class="menu-card wood" onclick="startGame('wood')">
+                <span class="icon">📏</span>
+                <span class="title">Snickarboa</span>
+                <p>Längd & Sträckor</p>
+            </div>
         </div>
-
-        <div class="question-box" id="questionText">
-            Laddar fråga...
-        </div>
-
-        <input type="text" id="answerInput" placeholder="T.ex. 3x" autocomplete="off">
-        <br>
-        <button id="checkBtn" onclick="checkAnswer()">Rätta</button>
-        <button id="nextBtn" class="secondary" onclick="nextQuestion()">Nästa Fråga ➡️</button>
-
-        <div id="feedback"></div>
     </div>
 
-    <script>
-        // Data
-        const fruits = [
-            { name: "banan", emoji: "🍌", price: 3, var: "x" },
-            { name: "äpple", emoji: "🍎", price: 4, var: "y" },
-            { name: "apelsin", emoji: "🍊", price: 5, var: "z" },
-            { name: "päron", emoji: "🍐", price: 6, var: "a" }
-        ];
+    <!-- KIOSK GAME -->
+    <div id="game-kiosk" class="game-screen">
+        <button class="back-btn" onclick="showMenu()">⬅ Meny</button>
+        <h2 style="text-align: center;">Kiosken</h2>
+        
+        <div id="kiosk-prices" style="text-align: center; margin-bottom: 20px;"></div>
+        
+        <div id="kiosk-question" style="font-size: 1.3rem; text-align: center; background: #e3f2fd; padding: 15px; border-radius: 10px;">
+            Laddar...
+        </div>
 
-        let currentQuestion = {};
+        <div class="input-area">
+            <input type="text" id="kiosk-input" placeholder="Svar..." autocomplete="off">
+            <button class="action-btn" onclick="checkKiosk()">Svara</button>
+        </div>
+        <div id="kiosk-feedback" class="feedback"></div>
+    </div>
 
-        // Init
-        function init() {
-            const list = document.getElementById('priceList');
-            list.innerHTML = "";
-            fruits.forEach(f => {
-                list.innerHTML += `<div class="price-item">${f.emoji} ${f.price} kr</div>`;
-            });
-            nextQuestion();
+    <!-- WOOD GAME -->
+    <div id="game-wood" class="game-screen">
+        <button class="back-btn" onclick="showMenu()">⬅ Meny</button>
+        <h2 style="text-align: center;">Snickarboa</h2>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="wood-plank" id="wood-visual">x cm</div>
+        </div>
+
+        <div id="wood-question" style="font-size: 1.3rem; text-align: center; background: #fff3e0; padding: 15px; border-radius: 10px;">
+            Laddar...
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="wood-input" placeholder="Svar..." autocomplete="off">
+            <button class="action-btn" style="background-color: var(--wood);" onclick="checkWood()">Såga!</button>
+        </div>
+        <div id="wood-feedback" class="feedback"></div>
+    </div>
+
+</div>
+
+<script>
+    // --- STATE ---
+    let currentMode = null;
+    let currentQ = null;
+
+    // --- DATA ---
+    const fruits = [
+        { name: "banan", price: 3, var: "x", icon: "🍌" },
+        { name: "äpple", price: 4, var: "y", icon: "🍎" },
+        { name: "päron", price: 5, var: "z", icon: "🍐" },
+        { name: "kivi", price: 6, var: "a", icon: "🥝" }
+    ];
+
+    // --- NAVIGATION ---
+    function showMenu() {
+        document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+        document.getElementById('menu').classList.add('active');
+        currentMode = null;
+    }
+
+    function startGame(mode) {
+        document.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+        document.getElementById(`game-${mode}`).classList.add('active');
+        currentMode = mode;
+        
+        if (mode === 'kiosk') initKiosk();
+        if (mode === 'wood') initWood();
+    }
+
+    // --- KIOSK LOGIC ---
+    function initKiosk() {
+        // Show prices
+        const container = document.getElementById('kiosk-prices');
+        container.innerHTML = fruits.map(f => 
+            `<div class="price-tag">${f.icon} ${f.price} kr</div>`
+        ).join('');
+        nextKioskQ();
+    }
+
+    function nextKioskQ() {
+        document.getElementById('kiosk-input').value = "";
+        document.getElementById('kiosk-feedback').innerHTML = "";
+        document.getElementById('kiosk-input').focus();
+
+        const type = Math.floor(Math.random() * 3);
+        const f1 = fruits[Math.floor(Math.random() * fruits.length)];
+        
+        if (type === 0) { // Pris
+            currentQ = {
+                text: `Vad får du betala för <b>${f1.var}</b> st ${f1.name}er?`,
+                answers: [`${f1.price}${f1.var}`, `${f1.price}*${f1.var}`]
+            };
+        } else if (type === 1) { // Växel 100
+            currentQ = {
+                text: `Du betalar med 100 kr för <b>${f1.var}</b> st ${f1.name}er. Vad får du tillbaka?`,
+                answers: [`100-${f1.price}${f1.var}`, `100-${f1.price}*${f1.var}`]
+            };
+        } else { // Två varor
+            const f2 = fruits.find(f => f !== f1);
+            currentQ = {
+                text: `Vad kostar <b>${f1.var}</b> st ${f1.name}er och <b>${f2.var}</b> st ${f2.name}er?`,
+                answers: [
+                    `${f1.price}${f1.var}+${f2.price}${f2.var}`,
+                    `${f2.price}${f2.var}+${f1.price}${f1.var}`
+                ]
+            };
         }
+        document.getElementById('kiosk-question').innerHTML = currentQ.text;
+    }
 
-        // Generate Question
-        function nextQuestion() {
-            // Reset UI
-            document.getElementById('answerInput').value = "";
-            document.getElementById('feedback').innerHTML = "";
-            document.getElementById('answerInput').disabled = false;
-            document.getElementById('checkBtn').style.display = "inline-block";
-            document.getElementById('nextBtn').style.display = "none";
-            document.getElementById('answerInput').focus();
+    function checkKiosk() {
+        validateAnswer(document.getElementById('kiosk-input').value, currentQ.answers, 'kiosk-feedback', nextKioskQ);
+    }
 
-            // Randomize type
-            const type = Math.floor(Math.random() * 3); // 0, 1, 2
-            const fruit = fruits[Math.floor(Math.random() * fruits.length)];
-            
-            if (type === 0) {
-                // Scenario A: "Vad kostar x bananer?"
-                currentQuestion = {
-                    text: `Teckna ett uttryck för vad du får betala för <b>${fruit.var}</b> st ${fruit.name}er.`,
-                    answers: [`${fruit.price}${fruit.var}`, `${fruit.price}*${fruit.var}`, `${fruit.price} * ${fruit.var}`, `${fruit.price} ${fruit.var}`]
-                };
-            } else if (type === 1) {
-                // Scenario B: "Växel på 100 kr"
-                currentQuestion = {
-                    text: `Teckna ett uttryck för vad du får tillbaka på <b>100 kr</b> om du köper <b>${fruit.var}</b> st ${fruit.name}er.`,
-                    answers: [`100-${fruit.price}${fruit.var}`, `100 - ${fruit.price}${fruit.var}`, `100-${fruit.price}*${fruit.var}`]
-                };
-            } else {
-                // Scenario C: Två frukter
-                const fruit2 = fruits.find(f => f !== fruit);
-                currentQuestion = {
-                    text: `Teckna ett uttryck för priset av <b>${fruit.var}</b> st ${fruit.name}er och <b>${fruit2.var}</b> st ${fruit2.name}er.`,
-                    answers: [
-                        `${fruit.price}${fruit.var}+${fruit2.price}${fruit2.var}`, 
-                        `${fruit.price}${fruit.var} + ${fruit2.price}${fruit2.var}`,
-                        `${fruit2.price}${fruit2.var}+${fruit.price}${fruit.var}`, // Omvänd ordning
-                        `${fruit2.price}${fruit2.var} + ${fruit.price}${fruit.var}`
-                    ]
-                };
-            }
+    // --- WOOD LOGIC ---
+    function initWood() {
+        nextWoodQ();
+    }
 
-            document.getElementById('questionText').innerHTML = currentQuestion.text;
+    function nextWoodQ() {
+        document.getElementById('wood-input').value = "";
+        document.getElementById('wood-feedback').innerHTML = "";
+        document.getElementById('wood-input').focus();
+
+        const type = Math.floor(Math.random() * 4);
+        const val = Math.floor(Math.random() * 10) + 2; // 2-12
+        
+        if (type === 0) { // Kortare
+            currentQ = {
+                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>${val} cm kortare</b>.`,
+                answers: [`x-${val}`]
+            };
+        } else if (type === 1) { // Längre
+            currentQ = {
+                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>${val} cm längre</b>.`,
+                answers: [`x+${val}`, `${val}+x`]
+            };
+        } else if (type === 2) { // Dubbelt
+            currentQ = {
+                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>dubbelt</b> så lång.`,
+                answers: [`2x`, `2*x`, `x*2`]
+            };
+        } else { // Hälften
+            currentQ = {
+                text: `Den här brädan är <b>x</b> cm. <br>Vi behöver en som är <b>hälften</b> så lång.`,
+                answers: [`x/2`, `0.5x`, `0.5*x`, `x*0.5`]
+            };
         }
+        document.getElementById('wood-question').innerHTML = currentQ.text;
+    }
 
-        // Check Answer
-        function checkAnswer() {
-            let input = document.getElementById('answerInput').value.trim();
-            // Normalisera input: ta bort onödiga mellanslag om användaren skriver "3 x" -> "3x"
-            // För enkelhets skull matchar vi mot en lista av godkända svar för nu.
-            
-            // Små bokstäver
-            input = input.toLowerCase();
+    function checkWood() {
+        validateAnswer(document.getElementById('wood-input').value, currentQ.answers, 'wood-feedback', nextWoodQ);
+    }
 
-            // Enkel normalisering: Ta bort alla mellanslag för jämförelse
-            const cleanInput = input.replace(/\s/g, '');
-            
-            let isCorrect = false;
-            // Jämför renat svar mot renade facit-svar
-            for (let ans of currentQuestion.answers) {
-                if (cleanInput === ans.replace(/\s/g, '')) {
-                    isCorrect = true;
-                    break;
-                }
-            }
+    // --- SHARED VALIDATION ---
+    function validateAnswer(input, answers, feedbackId, nextFn) {
+        // Normalize: remove spaces, lowercase
+        const cleanInput = input.toLowerCase().replace(/\s/g, '').replace(',', '.');
+        const cleanAnswers = answers.map(a => a.toLowerCase().replace(/\s/g, ''));
 
-            const feedback = document.getElementById('feedback');
-            if (isCorrect) {
-                feedback.innerHTML = "<span class='correct'>✅ Rätt svar! Bra jobbat!</span>";
-                document.getElementById('checkBtn').style.display = "none";
-                document.getElementById('nextBtn').style.display = "inline-block";
-                document.getElementById('answerInput').disabled = true;
-                document.getElementById('nextBtn').focus();
-            } else {
-                feedback.innerHTML = "<span class='wrong'>❌ Inte riktigt. Försök igen!</span>";
-            }
+        const el = document.getElementById(feedbackId);
+        
+        if (cleanAnswers.includes(cleanInput)) {
+            el.innerHTML = "<span class='correct'>✅ Rätt!</span>";
+            setTimeout(nextFn, 1000); // Auto next after 1s
+        } else {
+            el.innerHTML = "<span class='wrong'>❌ Inte riktigt. Försök igen!</span>";
         }
+    }
 
-        // Allow Enter key
-        document.getElementById('answerInput').addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                if (document.getElementById('nextBtn').style.display === 'none') {
-                    checkAnswer();
-                } else {
-                    nextQuestion();
-                }
-            }
-        });
+    // Enter Key Support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            if (currentMode === 'kiosk') checkKiosk();
+            if (currentMode === 'wood') checkWood();
+        }
+    });
 
-        init();
-    </script>
+</script>
 
 </body>
 </html>
