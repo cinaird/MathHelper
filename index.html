@@ -261,10 +261,10 @@
 
     // --- DATA ---
     const fruits = [
-        { name: "banan", price: 3, var: "x", icon: "🍌" },
-        { name: "äpple", price: 4, var: "y", icon: "🍎" },
-        { name: "päron", price: 5, var: "z", icon: "🍐" },
-        { name: "kivi", price: 6, var: "a", icon: "🥝" }
+        { name: "banan", plural: "bananer", price: 3, var: "x", icon: "🍌" },
+        { name: "äpple", plural: "äpplen", price: 4, var: "y", icon: "🍎" },
+        { name: "päron", plural: "päron", price: 5, var: "z", icon: "🍐" },
+        { name: "kiwi", plural: "kiwier", price: 6, var: "a", icon: "🥝" }
     ];
 
     // --- NAVIGATION ---
@@ -315,22 +315,22 @@
         
         if (type === 0) { // Pris
             currentQ = {
-                text: `Vad får du betala för <b>${f1.var}</b> st ${f1.name}er?`,
+                text: `Vad får du betala för <b>${f1.var}</b> st ${f1.plural}?`,
                 answers: [`${f1.price}${f1.var}`],
                 hint: `Ta priset (${f1.price}) gånger antalet (${f1.var}). Skriv dem ihop!`
             };
         } else if (type === 1) { // Växel 100
             currentQ = {
-                text: `Du betalar med 100 kr för <b>${f1.var}</b> st ${f1.name}er. Vad får du tillbaka?`,
+                text: `Du betalar med 100 kr för <b>${f1.var}</b> st ${f1.plural}. Vad får du tillbaka?`,
                 answers: [`100-${f1.price}${f1.var}`],
                 hint: `Du börjar med 100 kr. Dra sedan bort (-) kostnaden för frukten (${f1.price}${f1.var}).`
             };
         } else { // Två varor
             const f2 = fruits.find(f => f !== f1);
             currentQ = {
-                text: `Vad kostar <b>${f1.var}</b> st ${f1.name}er och <b>${f2.var}</b> st ${f2.name}er?`,
+                text: `Vad kostar <b>${f1.var}</b> st ${f1.plural} och <b>${f2.var}</b> st ${f2.plural}?`,
                 answers: [`${f1.price}${f1.var}+${f2.price}${f2.var}`, `${f2.price}${f2.var}+${f1.price}${f1.var}`],
-                hint: `Räkna ut priset för ${f1.name}erna först, sen ${f2.name}erna. Plussa ihop dem (+).`
+                hint: `Räkna ut priset för ${f1.plural}a först, sen ${f2.plural}a. Plussa ihop dem (+).`
             };
         }
         document.getElementById('kiosk-question').innerHTML = currentQ.text;
