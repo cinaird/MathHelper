@@ -157,6 +157,7 @@
         }
         .correct { color: var(--success); }
         .wrong { color: var(--danger); }
+        .hint { color: #f39c12; font-size: 1rem; display: block; margin-top: 5px;}
 
     </style>
 </head>
@@ -336,17 +337,36 @@
         validateAnswer(document.getElementById('wood-input').value, currentQ.answers, 'wood-feedback', nextWoodQ);
     }
 
-    // --- SHARED VALIDATION ---
+    // --- SMART VALIDATION ---
+    function smartNormalize(str) {
+        let s = str.toLowerCase();
+        s = s.replace(/\s/g, ''); // Ta bort mellanslag
+        s = s.replace(',', '.');   // Komma till punkt
+        s = s.replace(/\*/g, '');  // Ta bort gånger (3*x -> 3x)
+        
+        // Smart fix: "y4" -> "4y" (Bokstav följt av Siffra -> Byt plats)
+        // Regex fångar: (en bokstav a-z)(ett eller flera nummer)
+        s = s.replace(/([a-zåäö])([0-9]+)/g, '$2$1');
+        
+        return s;
+    }
+
     function validateAnswer(input, answers, feedbackId, nextFn) {
-        // Normalize: remove spaces, lowercase
-        const cleanInput = input.toLowerCase().replace(/\s/g, '').replace(',', '.');
-        const cleanAnswers = answers.map(a => a.toLowerCase().replace(/\s/g, ''));
+        const cleanInput = smartNormalize(input);
+        const cleanAnswers = answers.map(a => smartNormalize(a));
 
         const el = document.getElementById(feedbackId);
         
+        // Kolla om input finns i facit
         if (cleanAnswers.includes(cleanInput)) {
             el.innerHTML = "<span class='correct'>✅ Rätt!</span>";
-            setTimeout(nextFn, 1000); // Auto next after 1s
+            
+            // Pedagogisk feedback om man skrev y4 men vi godkände det
+            if (input.match(/[a-z][0-9]/i)) {
+               el.innerHTML += "<span class='hint'>Tips: I matten skriver man oftast siffran först (4y istället för y4).</span>";
+            }
+
+            setTimeout(nextFn, 2000); // Lite längre tid för att hinna läsa tipset
         } else {
             el.innerHTML = "<span class='wrong'>❌ Inte riktigt. Försök igen!</span>";
         }
@@ -362,6 +382,6 @@
 
 </script>
 
-<!-- Trigger Deploy: v2.1 -->
+<!-- MathHelper v2.2: Smarter Validation -->
 </body>
 </html>
