@@ -24,7 +24,8 @@
             <button class="hint-btn" id="btn-hint" title="Få en ledtråd">💡</button>
         </div>
         <div id="hint-box" class="hint-box"></div>
-        <button class="action-btn" onclick="checkAnswer()">Såga!</button>
+        <button class="action-btn" id="check-btn" style="background-color: var(--wood);" onclick="checkAnswer()">Såga!</button>
+        <button class="action-btn" id="next-btn" style="background-color: var(--success); display:none; margin-top:10px;" onclick="nextQuestion()">Nästa ➡</button>
         
         <div id="wood-feedback" class="feedback"></div>
     </div>
@@ -36,11 +37,16 @@
     let currentQ = null;
 
     function init() {
+        // Expose nextQuestion to window scope
+        window.nextQuestion = nextQuestion;
         nextQuestion();
     }
 
     function nextQuestion() {
         resetUI('wood');
+        document.getElementById('check-btn').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'none';
+
         const type = Math.floor(Math.random() * 4);
         const val = Math.floor(Math.random() * 10) + 2; 
         
@@ -78,7 +84,9 @@
         document.getElementById('wood-feedback').innerHTML = result.html;
         
         if (result.isCorrect) {
-            setTimeout(nextQuestion, 2000);
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('next-btn').focus();
         }
     };
 
@@ -91,11 +99,17 @@
 
     // Enter key logic
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') window.checkAnswer();
+        if (e.key === 'Enter') {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn.style.display === 'block') {
+                nextQuestion();
+            } else {
+                window.checkAnswer();
+            }
+        }
     });
 
     init();
 </script>
-
 </body>
 </html>
