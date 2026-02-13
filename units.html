@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhets-Pusslet - MathHelper</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .equation-area {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+            font-size: 2rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .term-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .term {
+            font-weight: bold;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            min-width: 40px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .operator {
+            padding-top: 10px; /* Align with terms */
+        }
+
+        .slot {
+            width: 60px;
+            height: 40px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #888;
+            transition: all 0.2s;
+        }
+
+        .slot.filled {
+            border-style: solid;
+            background-color: #e3f2fd;
+            color: var(--primary);
+            font-weight: bold;
+            border-color: var(--primary);
+        }
+
+        .slot.selected-target {
+            border-color: var(--primary);
+            background-color: #e1f5fe;
+            transform: scale(1.1);
+        }
+
+        .toolbox {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .unit-btn {
+            background-color: white;
+            border: 2px solid #ddd;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ddd;
+            transition: transform 0.1s;
+        }
+
+        .unit-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .unit-btn.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: #2980b9;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+
+        /* Feedback colors override */
+        .slot.correct { background-color: var(--success); color: white; border-color: var(--success); }
+        .slot.wrong { background-color: var(--danger); color: white; border-color: var(--danger); }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="game-screen">
+        <a href="index.html" class="back-btn">⬅ Meny</a>
+        <h2 style="text-align: center;">Enhets-Pusslet 🧩</h2>
+        
+        <div id="scenario-text" class="question-box" style="background: #e8f5e9;">
+            Laddar...
+        </div>
+
+        <!-- The Equation & Slots -->
+        <div id="equation-container" class="equation-area"></div>
+
+        <!-- The Unit Toolbox -->
+        <div id="toolbox" class="toolbox"></div>
+
+        <div id="feedback" class="feedback"></div>
+        
+        <button class="action-btn" id="check-btn" onclick="checkPuzzle()" style="display:none; margin-top:30px;">Rätta</button>
+        <button class="action-btn" id="next-btn" onclick="nextLevel()" style="display:none; margin-top:30px; background-color: var(--success);">Nästa ➡</button>
+    </div>
+</div>
+
+<script>
+    // --- DATA ---
+    const levels = [
+        {
+            text: "Du köper <b>5</b> bananer. De kostar <b>x</b> kr styck.",
+            terms: [
+                { val: "5", unit: "st" },
+                { val: "×", type: "op" },
+                { val: "x", unit: "kr/st" },
+                { val: "=", type: "op" },
+                { val: "Pris", unit: "kr" }
+            ],
+            options: ["st", "kr", "kr/st", "m"]
+        },
+        {
+            text: "En bräda är <b>x</b> cm lång. Du sågar av <b>10</b> cm.",
+            terms: [
+                { val: "x", unit: "cm" },
+                { val: "-", type: "op" },
+                { val: "10", unit: "cm" },
+                { val: "=", type: "op" },
+                { val: "Kvar", unit: "cm" }
+            ],
+            options: ["cm", "st", "kr", "m"]
+        },
+        {
+            text: "Du betalar med en <b>100</b>-lapp för <b>x</b> äpplen som kostar <b>4</b> kr/st.",
+            terms: [
+                { val: "100", unit: "kr" },
+                { val: "-", type: "op" },
+                { val: "4", unit: "kr/st" },
+                { val: "×", type: "op" },
+                { val: "x", unit: "st" }
+            ],
+            options: ["kr", "st", "kr/st", "år"]
+        }
+    ];
+
+    let currentLevelIdx = -1;
+    let currentLevel = null;
+    let selectedUnit = null;
+    let userAnswers = {}; // index -> unit string
+
+    function nextLevel() {
+        currentLevelIdx = (currentLevelIdx + 1) % levels.length;
+        currentLevel = levels[currentLevelIdx];
+        userAnswers = {};
+        selectedUnit = null;
+        
+        document.getElementById('scenario-text').innerHTML = currentLevel.text;
+        document.getElementById('feedback').innerHTML = "";
+        document.getElementById('check-btn').style.display = "block";
+        document.getElementById('next-btn').style.display = "none";
+
+        renderEquation();
+        renderToolbox();
+    }
+
+    function renderEquation() {
+        const container = document.getElementById('equation-container');
+        container.innerHTML = "";
+
+        currentLevel.terms.forEach((term, idx) => {
+            if (term.type === 'op') {
+                container.innerHTML += `<div class="operator">${term.val}</div>`;
+            } else {
+                // Term with a slot under it
+                const filledUnit = userAnswers[idx] || "?";
+                const filledClass = userAnswers[idx] ? "filled" : "";
+                
+                container.innerHTML += `
+                    <div class="term-group">
+                        <div class="term">${term.val}</div>
+                        <div class="slot ${filledClass}" id="slot-${idx}" onclick="placeUnit(${idx})">${filledUnit}</div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    function renderToolbox() {
+        const container = document.getElementById('toolbox');
+        container.innerHTML = currentLevel.options.map(unit => `
+            <button class="unit-btn" onclick="selectUnit('${unit}', this)">${unit}</button>
+        `).join('');
+    }
+
+    function selectUnit(unit, btnElement) {
+        selectedUnit = unit;
+        
+        // Visual feedback on buttons
+        document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('selected'));
+        btnElement.classList.add('selected');
+    }
+
+    window.placeUnit = function(slotIdx) {
+        if (!selectedUnit) return;
+        
+        userAnswers[slotIdx] = selectedUnit;
+        renderEquation(); // Re-render to show filled state
+        
+        // Check if all slots are filled
+        const requiredSlots = currentLevel.terms.filter(t => !t.type).length;
+        if (Object.keys(userAnswers).length === requiredSlots) {
+            // Optional: Auto-check or just enable button styling
+        }
+    };
+
+    window.checkPuzzle = function() {
+        let allCorrect = true;
+        
+        // Validate each slot
+        currentLevel.terms.forEach((term, idx) => {
+            if (term.type === 'op') return;
+            
+            const slotEl = document.getElementById(`slot-${idx}`);
+            if (userAnswers[idx] === term.unit) {
+                slotEl.classList.add('correct');
+                slotEl.classList.remove('wrong');
+            } else {
+                slotEl.classList.add('wrong');
+                slotEl.classList.remove('correct');
+                allCorrect = false;
+            }
+        });
+
+        if (allCorrect) {
+            document.getElementById('feedback').innerHTML = "<span class='correct'>✅ Alla enheter rätt!</span>";
+            document.getElementById('check-btn').style.display = "none";
+            document.getElementById('next-btn').style.display = "block";
+        } else {
+            document.getElementById('feedback').innerHTML = "<span class='wrong'>❌ Något blev fel. Kolla de röda rutorna!</span>";
+        }
+    };
+
+    // Init
+    nextLevel();
+
+</script>
+
+</body>
+</html>
