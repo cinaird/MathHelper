@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosken - MathHelper</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <div class="game-screen">
+        <a href="index.html" class="back-btn">⬅ Meny</a>
+        <h2 style="text-align: center;">Kiosken 🏪</h2>
+        
+        <div id="kiosk-prices" style="text-align: center; margin-bottom: 20px;"></div>
+        
+        <div id="kiosk-question" class="question-box">Laddar...</div>
+
+        <div class="input-area">
+            <input type="text" id="kiosk-input" placeholder="Svar..." autocomplete="off">
+            <button class="hint-btn" id="btn-hint" title="Få en ledtråd">💡</button>
+        </div>
+        <div id="hint-box" class="hint-box"></div>
+        <button class="action-btn" onclick="checkAnswer()">Svara</button>
+        
+        <div id="kiosk-feedback" class="feedback"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { getValidationResult, resetUI } from './js/utils.js';
+
+    // DATA
+    const fruits = [
+        { name: "banan", plural: "bananer", price: 3, var: "x", icon: "🍌" },
+        { name: "äpple", plural: "äpplen", price: 4, var: "y", icon: "🍎" },
+        { name: "päron", plural: "päron", price: 5, var: "z", icon: "🍐" },
+        { name: "kiwi", plural: "kiwier", price: 6, var: "a", icon: "🥝" }
+    ];
+
+    let currentQ = null;
+
+    function init() {
+        const container = document.getElementById('kiosk-prices');
+        container.innerHTML = fruits.map(f => 
+            `<div class="price-tag">${f.icon} ${f.price} kr</div>`
+        ).join('');
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        resetUI('kiosk');
+        const type = Math.floor(Math.random() * 3);
+        const f1 = fruits[Math.floor(Math.random() * fruits.length)];
+        
+        if (type === 0) { // Pris
+            currentQ = {
+                text: `Vad får du betala för <b>${f1.var}</b> st ${f1.plural}?`,
+                answers: [`${f1.price}${f1.var}`],
+                hint: `1. En ${f1.name} kostar <b>${f1.price} kr</b>.<br>2. Du köper <b>${f1.var}</b> stycken.<br>3. Skriv ihop pris och antal.`
+            };
+        } else if (type === 1) { // Växel 100
+            currentQ = {
+                text: `Du betalar med 100 kr för <b>${f1.var}</b> st ${f1.plural}. Vad får du tillbaka?`,
+                answers: [`100-${f1.price}${f1.var}`],
+                hint: `1. Kostnaden är <b>${f1.price}${f1.var}</b>.<br>2. Du har 100 kr.<br>3. Dra bort (-) kostnaden från hundralappen.`
+            };
+        } else { // Två varor
+            const f2 = fruits.find(f => f !== f1);
+            currentQ = {
+                text: `Vad kostar <b>${f1.var}</b> st ${f1.plural} och <b>${f2.var}</b> st ${f2.plural}?`,
+                answers: [`${f1.price}${f1.var}+${f2.price}${f2.var}`, `${f2.price}${f2.var}+${f1.price}${f1.var}`],
+                hint: `1. Priset för ${f1.plural} är <b>${f1.price}${f1.var}</b>.<br>2. Priset för ${f2.plural} är <b>${f2.price}${f2.var}</b>.<br>3. Lägg ihop dem (+).`
+            };
+        }
+        document.getElementById('kiosk-question').innerHTML = currentQ.text;
+    }
+
+    window.checkAnswer = function() {
+        const input = document.getElementById('kiosk-input').value;
+        const result = getValidationResult(input, currentQ.answers);
+        document.getElementById('kiosk-feedback').innerHTML = result.html;
+        
+        if (result.isCorrect) {
+            setTimeout(nextQuestion, 2000);
+        }
+    };
+
+    // Hint button logic
+    document.getElementById('btn-hint').onclick = () => {
+        const box = document.getElementById('hint-box');
+        box.innerHTML = currentQ.hint;
+        box.style.display = "block";
+    };
+
+    // Enter key logic
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') window.checkAnswer();
+    });
+
+    init();
+</script>
+
+</body>
+</html>

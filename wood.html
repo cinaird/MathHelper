@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snickarboa - MathHelper</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="wood-theme">
+
+<div class="app-container">
+    <div class="game-screen">
+        <a href="index.html" class="back-btn">⬅ Meny</a>
+        <h2 style="text-align: center;">Snickarboa 📏</h2>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <div class="wood-plank" id="wood-visual">x cm</div>
+        </div>
+
+        <div id="wood-question" class="question-box">Laddar...</div>
+
+        <div class="input-area">
+            <input type="text" id="wood-input" placeholder="Svar..." autocomplete="off">
+            <button class="hint-btn" id="btn-hint" title="Få en ledtråd">💡</button>
+        </div>
+        <div id="hint-box" class="hint-box"></div>
+        <button class="action-btn" onclick="checkAnswer()">Såga!</button>
+        
+        <div id="wood-feedback" class="feedback"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { getValidationResult, resetUI } from './js/utils.js';
+
+    let currentQ = null;
+
+    function init() {
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        resetUI('wood');
+        const type = Math.floor(Math.random() * 4);
+        const val = Math.floor(Math.random() * 10) + 2; 
+        
+        if (type === 0) { // Kortare
+            currentQ = {
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>${val} cm kortare</b>.`,
+                answers: [`x-${val}`],
+                hint: `1. Vi börjar med längden <b>x</b>.<br>2. "Kortare" betyder minus (-).<br>3. Dra bort <b>${val}</b>.`
+            };
+        } else if (type === 1) { // Längre
+            currentQ = {
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>${val} cm längre</b>.`,
+                answers: [`x+${val}`, `${val}+x`],
+                hint: `1. Vi börjar med längden <b>x</b>.<br>2. "Längre" betyder plus (+).<br>3. Lägg till <b>${val}</b>.`
+            };
+        } else if (type === 2) { // Dubbelt
+            currentQ = {
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>dubbelt</b> så lång.`,
+                answers: [`2x`],
+                hint: `1. Dubbelt betyder "gånger 2".<br>2. Skriv <b>2</b> framför <b>x</b>.`
+            };
+        } else { // Hälften
+            currentQ = {
+                text: `Brädan är <b>x</b> cm. Vi behöver en som är <b>hälften</b> så lång.`,
+                answers: [`x/2`, `0.5x`],
+                hint: `1. Hälften betyder dela med 2.<br>2. Använd bråkstreck (/).`
+            };
+        }
+        document.getElementById('wood-question').innerHTML = currentQ.text;
+    }
+
+    window.checkAnswer = function() {
+        const input = document.getElementById('wood-input').value;
+        const result = getValidationResult(input, currentQ.answers);
+        document.getElementById('wood-feedback').innerHTML = result.html;
+        
+        if (result.isCorrect) {
+            setTimeout(nextQuestion, 2000);
+        }
+    };
+
+    // Hint button logic
+    document.getElementById('btn-hint').onclick = () => {
+        const box = document.getElementById('hint-box');
+        box.innerHTML = currentQ.hint;
+        box.style.display = "block";
+    };
+
+    // Enter key logic
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') window.checkAnswer();
+    });
+
+    init();
+</script>
+
+</body>
+</html>
