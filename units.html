@@ -129,53 +129,70 @@
 </div>
 
 <script>
-    // --- DATA ---
-    const levels = [
-        /*
-        {
-            text: "Du köper <b>5</b> bananer. De kostar <b>x</b> kr styck.",
-            terms: [
-                { val: "5", unit: "st" },
-                { val: "×", type: "op" },
-                { val: "x", unit: "kr/st" },
-                { val: "=", type: "op" },
-                { val: "Pris", unit: "kr" }
-            ],
-            options: ["st", "kr", "kr/st", "m"]
+    // --- DYNAMIC LEVEL GENERATORS ---
+    const levelGenerators = [
+        // Level 1: Pris (Multiplikation)
+        () => {
+            const count = Math.floor(Math.random() * 8) + 2; // 2-9
+            const fruit = ["bananer", "äpplen", "päron", "kiwis"][Math.floor(Math.random() * 4)];
+            return {
+                text: `Du köper <b>${count}</b> ${fruit}. De kostar <b>x</b> kr styck.`,
+                terms: [
+                    { val: count, unit: "st" },
+                    { val: "×", type: "op" },
+                    { val: "x", unit: "kr/st" },
+                    { val: "=", type: "op" },
+                    { val: "Pris", unit: "kr" }
+                ],
+                options: ["st", "kr", "kr/st", "m"]
+            };
         },
-        {
-            text: "En bräda är <b>x</b> cm lång. Du sågar av <b>10</b> cm.",
-            terms: [
-                { val: "x", unit: "cm" },
-                { val: "-", type: "op" },
-                { val: "10", unit: "cm" },
-                { val: "=", type: "op" },
-                { val: "Kvar", unit: "cm" }
-            ],
-            options: ["cm", "st", "kr", "m"]
+        // Level 2: Längd (Subtraktion)
+        () => {
+            const cut = Math.floor(Math.random() * 20) + 5; // 5-25
+            return {
+                text: `En bräda är <b>x</b> cm lång. Du sågar av <b>${cut}</b> cm.`,
+                terms: [
+                    { val: "x", unit: "cm" },
+                    { val: "-", type: "op" },
+                    { val: cut, unit: "cm" },
+                    { val: "=", type: "op" },
+                    { val: "Kvar", unit: "cm" }
+                ],
+                options: ["cm", "st", "kr", "m"]
+            };
         },
-        */
-        {
-            text: "Du betalar med en <b>100</b>-lapp för <b>x</b> äpplen som kostar <b>4</b> kr/st.",
-            terms: [
-                { val: "100", unit: "kr" },
-                { val: "-", type: "op" },
-                { val: "4", unit: "kr/st" },
-                { val: "×", type: "op" },
-                { val: "x", unit: "st" }
-            ],
-            options: ["kr", "st", "kr/st", "år"]
+        // Level 3: Växel (Blandat)
+        () => {
+            const bill = [50, 100, 200, 500][Math.floor(Math.random() * 4)];
+            const price = Math.floor(Math.random() * 10) + 2; // 2-12
+            const fruit = ["äpplen", "glassar", "pennor"][Math.floor(Math.random() * 3)];
+            return {
+                text: `Du betalar med en <b>${bill}</b>-lapp för <b>x</b> ${fruit} som kostar <b>${price}</b> kr/st.`,
+                terms: [
+                    { val: bill, unit: "kr" },
+                    { val: "-", type: "op" },
+                    { val: price, unit: "kr/st" },
+                    { val: "×", type: "op" },
+                    { val: "x", unit: "st" }
+                ],
+                options: ["kr", "st", "kr/st", "år"]
+            };
         }
     ];
 
-    let currentLevelIdx = -1;
+    let currentLevelIdx = -1; // Start before 0
     let currentLevel = null;
     let selectedUnit = null;
-    let userAnswers = {}; // index -> unit string
+    let userAnswers = {}; 
 
     function nextLevel() {
-        currentLevelIdx = (currentLevelIdx + 1) % levels.length;
-        currentLevel = levels[currentLevelIdx];
+        // Cycle through generators: 0 -> 1 -> 2 -> 0...
+        currentLevelIdx = (currentLevelIdx + 1) % levelGenerators.length;
+        
+        // Generate new data!
+        currentLevel = levelGenerators[currentLevelIdx]();
+        
         userAnswers = {};
         selectedUnit = null;
         
@@ -196,7 +213,6 @@
             if (term.type === 'op') {
                 container.innerHTML += `<div class="operator">${term.val}</div>`;
             } else {
-                // Term with a slot under it
                 const filledUnit = userAnswers[idx] || "?";
                 const filledClass = userAnswers[idx] ? "filled" : "";
                 
@@ -219,32 +235,20 @@
 
     function selectUnit(unit, btnElement) {
         selectedUnit = unit;
-        
-        // Visual feedback on buttons
         document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('selected'));
         btnElement.classList.add('selected');
     }
 
     window.placeUnit = function(slotIdx) {
         if (!selectedUnit) return;
-        
         userAnswers[slotIdx] = selectedUnit;
-        renderEquation(); // Re-render to show filled state
-        
-        // Check if all slots are filled
-        const requiredSlots = currentLevel.terms.filter(t => !t.type).length;
-        if (Object.keys(userAnswers).length === requiredSlots) {
-            // Optional: Auto-check or just enable button styling
-        }
+        renderEquation();
     };
 
     window.checkPuzzle = function() {
         let allCorrect = true;
-        
-        // Validate each slot
         currentLevel.terms.forEach((term, idx) => {
             if (term.type === 'op') return;
-            
             const slotEl = document.getElementById(`slot-${idx}`);
             if (userAnswers[idx] === term.unit) {
                 slotEl.classList.add('correct');
@@ -265,7 +269,6 @@
         }
     };
 
-    // Init
     nextLevel();
 
 </script>
