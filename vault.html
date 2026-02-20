@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Värderings-valvet - MathHelper</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Vault specific styles */
+        .vault-container {
+            background-color: #555;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            border: 10px solid #333;
+            box-shadow: inset 0 0 20px #000;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .screen {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border: 2px solid #666;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .sticky-note {
+            background-color: #f1c40f;
+            color: #333;
+            padding: 10px;
+            transform: rotate(-3deg);
+            display: inline-block;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            top: -15px;
+            right: -10px;
+            border: 1px solid #e1b40e;
+        }
+
+        .handle {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #999, #333);
+            border-radius: 50%;
+            margin: 0 auto;
+            border: 5px solid #222;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .handle.open {
+            transform: rotate(90deg);
+        }
+
+        .vault-door {
+            transition: transform 1s;
+            transform-origin: left;
+        }
+        
+        .vault-door.open {
+            transform: perspective(600px) rotateY(-100deg);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="game-screen">
+        <a href="index.html" class="back-btn">⬅ Meny</a>
+        <h2 style="text-align: center;">Värderings-valvet 🏦</h2>
+        
+        <div class="vault-container">
+            <div class="sticky-note" id="var-note">x = 5</div>
+            <div class="screen" id="vault-expression">3x + 2</div>
+            <div class="handle" id="vault-handle"></div>
+        </div>
+
+        <div id="vault-question" class="question-box">Vad blir värdet?</div>
+
+        <div class="input-area">
+            <input type="text" id="vault-input" placeholder="Kod..." autocomplete="off">
+            <button class="hint-btn" id="btn-hint" title="Få en ledtråd">💡</button>
+        </div>
+        <div id="hint-box" class="hint-box"></div>
+        
+        <button class="action-btn" id="check-btn" onclick="checkAnswer()" style="background-color: #555;">Öppna Valvet</button>
+        <button class="action-btn" id="next-btn" onclick="nextQuestion()" style="display:none; background-color: var(--success);">Nästa ➡</button>
+        
+        <div id="vault-feedback" class="feedback"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { getValidationResult, resetUI } from './js/utils.js';
+
+    let currentQ = null;
+
+    function init() {
+        window.nextQuestion = nextQuestion;
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        resetUI('vault');
+        document.getElementById('check-btn').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('vault-handle').classList.remove('open'); // Reset animation
+
+        // Randomize Expression
+        const xVal = Math.floor(Math.random() * 9) + 2; // x = 2..10
+        const m = Math.floor(Math.random() * 5) + 2; // 2x..6x
+        const c = Math.floor(Math.random() * 10) + 1; // +1..+10
+        const type = Math.floor(Math.random() * 3); // 0=Ax+B, 1=Ax-B, 2=A(x+B) [Parentes]
+
+        let expression = "";
+        let answer = 0;
+
+        if (type === 0) {
+            expression = `${m}x + ${c}`;
+            answer = m * xVal + c;
+        } else if (type === 1) {
+            expression = `${m}x - ${c}`;
+            answer = m * xVal - c;
+        } else {
+            // Parentes: 3(x + 2)
+            expression = `${m}(x + ${c})`;
+            answer = m * (xVal + c);
+        }
+
+        currentQ = {
+            xVal: xVal,
+            expression: expression,
+            answers: [`${answer}`],
+            hint: `Byt ut <b>x</b> mot <b>${xVal}</b>.<br>Räkna ut: <b>${expression.replace('x', '*' + xVal)}</b>`
+        };
+
+        document.getElementById('var-note').innerText = `x = ${xVal}`;
+        document.getElementById('vault-expression').innerText = expression;
+    }
+
+    window.checkAnswer = function() {
+        const input = document.getElementById('vault-input').value;
+        const result = getValidationResult(input, currentQ.answers);
+        document.getElementById('vault-feedback').innerHTML = result.html;
+        
+        if (result.isCorrect) {
+            // Animation!
+            document.getElementById('vault-handle').classList.add('open');
+            
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('next-btn').focus();
+        }
+    };
+
+    document.getElementById('btn-hint').onclick = () => {
+        const box = document.getElementById('hint-box');
+        box.innerHTML = currentQ.hint;
+        box.style.display = "block";
+    };
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn.style.display === 'block') nextQuestion();
+            else window.checkAnswer();
+        }
+    });
+
+    init();
+</script>
+</body>
+</html>
