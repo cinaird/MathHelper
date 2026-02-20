@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mönster-maskinen - MathHelper</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Pattern specific styles */
+        .machine-display {
+            background-color: #34495e;
+            color: #ecf0f1;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            letter-spacing: 5px;
+            border: 5px solid #2c3e50;
+            box-shadow: inset 0 0 10px #000;
+            text-align: center;
+        }
+
+        .sequence-item {
+            display: inline-block;
+            background: #2c3e50;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 0 5px;
+        }
+
+        .missing-item {
+            color: #f1c40f;
+            border-bottom: 3px dashed #f1c40f;
+        }
+
+        .gear-icon {
+            font-size: 3rem;
+            animation: spin 4s linear infinite;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="game-screen">
+        <a href="index.html" class="back-btn">⬅ Meny</a>
+        <h2 style="text-align: center;"><span class="gear-icon">⚙️</span> Mönster-maskinen</h2>
+        
+        <div class="machine-display" id="pattern-display">
+            <!-- 3, 5, 7, ? -->
+        </div>
+
+        <div id="pattern-question" class="question-box">Laddar...</div>
+
+        <div class="input-area">
+            <input type="text" id="pattern-input" placeholder="Svar..." autocomplete="off">
+            <button class="hint-btn" id="btn-hint" title="Få en ledtråd">💡</button>
+        </div>
+        <div id="hint-box" class="hint-box"></div>
+        
+        <button class="action-btn" id="check-btn" onclick="checkAnswer()" style="background-color: #34495e;">Kör maskinen!</button>
+        <button class="action-btn" id="next-btn" onclick="nextQuestion()" style="display:none; background-color: var(--success);">Nästa ➡</button>
+        
+        <div id="pattern-feedback" class="feedback"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { getValidationResult, resetUI } from './js/utils.js';
+
+    let currentQ = null;
+
+    function init() {
+        window.nextQuestion = nextQuestion;
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        resetUI('pattern');
+        document.getElementById('check-btn').style.display = 'block';
+        document.getElementById('next-btn').style.display = 'none';
+
+        const type = Math.floor(Math.random() * 3); // 0=Next, 1=Diff, 2=FormulaCalc
+        
+        if (type === 0) { 
+            // Hitta nästa tal: 2, 4, 6, ?
+            const diff = Math.floor(Math.random() * 5) + 2; // +2 to +6
+            const start = Math.floor(Math.random() * 5) + 1;
+            const seq = [start, start+diff, start+diff*2, start+diff*3];
+            
+            currentQ = {
+                display: `<span class="sequence-item">${seq[0]}</span>, <span class="sequence-item">${seq[1]}</span>, <span class="sequence-item">${seq[2]}</span>, <span class="missing-item">?</span>`,
+                text: `Vilket tal kommer härnäst i talföljden?`,
+                answers: [`${seq[3]}`],
+                hint: `Kolla skillnaden mellan talen.<br>${seq[1]} - ${seq[0]} = <b>${diff}</b>.<br>Lägg till <b>${diff}</b> på sista talet.`
+            };
+        } 
+        else if (type === 1) { 
+            // Hitta differensen: 5, 8, 11... Ökar med ?
+            const diff = Math.floor(Math.random() * 5) + 2; 
+            const start = Math.floor(Math.random() * 10) + 1;
+            const seq = [start, start+diff, start+diff*2, "..."];
+
+            currentQ = {
+                display: `${seq.join(", ")}`,
+                text: `Talföljden ökar med samma tal hela tiden. <b>Vad är differensen?</b> (Vad ökar det med?)`,
+                answers: [`${diff}`],
+                hint: `Ta ett tal minus talet innan.<br>${start+diff} - ${start} = ?`
+            };
+        }
+        else { 
+            // Använd formel: n=1 i formeln 4n-3
+            const m = Math.floor(Math.random() * 4) + 2; // 2n to 5n
+            const c = Math.floor(Math.random() * 5) + 1; // -1 to -5 (or +)
+            const isMinus = Math.random() > 0.5;
+            const formula = `${m}n ${isMinus ? '-' : '+'} ${c}`;
+            
+            // Calculate for n=1
+            const ans = isMinus ? (m*1 - c) : (m*1 + c);
+
+            currentQ = {
+                display: `Formel: ${formula}`,
+                text: `Använd formeln för att räkna ut det <b>första talet</b> (n = 1).`,
+                answers: [`${ans}`],
+                hint: `Byt ut <b>n</b> mot <b>1</b> i formeln.<br>${m} &times; 1 ${isMinus ? '-' : '+'} ${c} = ?`
+            };
+        }
+
+        document.getElementById('pattern-display').innerHTML = currentQ.display;
+        document.getElementById('pattern-question').innerHTML = currentQ.text;
+    }
+
+    window.checkAnswer = function() {
+        const input = document.getElementById('pattern-input').value;
+        const result = getValidationResult(input, currentQ.answers);
+        document.getElementById('pattern-feedback').innerHTML = result.html;
+        
+        if (result.isCorrect) {
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('next-btn').focus();
+        }
+    };
+
+    document.getElementById('btn-hint').onclick = () => {
+        const box = document.getElementById('hint-box');
+        box.innerHTML = currentQ.hint;
+        box.style.display = "block";
+    };
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const nextBtn = document.getElementById('next-btn');
+            if (nextBtn.style.display === 'block') nextQuestion();
+            else window.checkAnswer();
+        }
+    });
+
+    init();
+</script>
+</body>
+</html>
